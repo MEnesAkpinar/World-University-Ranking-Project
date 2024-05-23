@@ -13,53 +13,10 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-
-#------University master data (API)--------
-
-#api_url = "http://universities.hipolabs.com/search"
-
-#response = requests.get(api_url)
-
-#data = response.json()
-
-#df = pd.DataFrame(data, columns=['country','web_pages','alpha_two_code','domains','state-province','name'])
-
-
-#print(df)
-
-
-#-------Universities Ranking Data ------------
-
-
-
-#url = "https://www.timeshighereducation.com/world-university-rankings/2024/world-ranking#!/length/-1/sort_by/rank/sort_order/asc/cols/stats"  
-
-#response = requests.get(url)
-
-#if response.status_code == 200:
- #   soup = BeautifulSoup(response.text, 'html.parser')
-
-
- #   table = soup.find('table')  # Adjust the selector if necessary
-
-
- #   if table is None:
- #       print("Error: No table found on the page.")
-        
- #   else:
-  #      print("No Error, you can continue..")
-        
-        
-#else:
-#    print("Failed to retrieve the webpage. Status code:", response.status_code)
-
-
-
-
-
-driver_service = Service(ChromeDriverManager().install())
-stats_browser = webdriver.Chrome(service=driver_service)
-scores_browser = webdriver.Chrome(service=driver_service)
+driver_service_stats = Service(ChromeDriverManager().install())
+driver_service_scores = Service(ChromeDriverManager().install())
+stats_browser = webdriver.Chrome(service=driver_service_stats)
+scores_browser = webdriver.Chrome(service=driver_service_scores)
 
 url_stats = "https://www.timeshighereducation.com/world-university-rankings/2024/world-ranking#!/length/-1/sort_by/rank/sort_order/asc/cols/stats"
 url_scores = "https://www.timeshighereducation.com/world-university-rankings/2024/world-ranking#!/length/-1/sort_by/rank/sort_order/asc/cols/scores"
@@ -109,9 +66,14 @@ scores_browser.quit()
 rank, names, number_students, student_staff_ratio, intl_students, female_male_ratio, web_address =  [], [], [], [], [], [], []
 overall_score, teaching_score, research_score, citations_score, industry_income_score, international_outlook_score = [], [], [], [], [], []
 for i in range(len(names_obj)):
-    web_address.append('https://www.timeshighereducation.com' + names_obj[i].a.get('href'))
+    href = ""
+    name = ""
+    if names_obj[i].a is not None : 
+        href = names_obj[i].a.get("href")
+        name = names_obj[i].a.text.strip()
+    web_address.append('https://www.timeshighereducation.com' + href)
     rank.append(rank_obj[i].text.strip())
-    names.append(names_obj[i].a.text.strip())
+    names.append(name)
     number_students.append(stats_number_students_obj[i].text.strip())
     student_staff_ratio.append(stats_student_staff_ratio_obj[i].text.strip())
     intl_students.append(stats_pc_intl_students_obj[i].text.strip())
@@ -132,16 +94,38 @@ for web in web_address:
         page_html = soup(page, 'html.parser')
         location = page_html.findAll('script', {'type':"application/ld+json"})
         jt = json.loads(location[0].text)
-        jsonnn_tree = objectpath.Tree(jt)
-        streetAddress_list.append(list(jsonnn_tree.execute('$..streetAddress'))[0])
-        addressLocality_list.append(list(jsonnn_tree.execute('$..addressLocality'))[0])
-        addressRegion_list.append(list(jsonnn_tree.execute('$..addressRegion'))[0])
-        postalCode_list.append(list(jsonnn_tree.execute('$..postalCode'))[0])
-        addressCountry_list.append(list(jsonnn_tree.execute('$..addressCountry'))[0])
-        full_address = page_html.findAll('div', {'class':"institution-info__contact-detail institution-info__contact-detail--address"})[0].text.strip()
-        full_address_list.append(full_address)
-        print(f'{len(full_address_list)} out of {len(web_address)}: {full_address}')
+        json_tree = objectpath.Tree(jt)
+
+        street_list = list(json_tree.execute('$..streetAddress'))
+        streetAddress_list.append(street_list[0] if street_list is not None and len(street_list) > 0 else '')
+
+        add_locality_list = list(json_tree.execute('$..addressLocality'))
+        addressLocality_list.append(add_locality_list[0] if add_locality_list is not None and len(add_locality_list) > 0 else '')
+
+        region_list = list(json_tree.execute('$..addressRegion'))
+        addressRegion_list.append(region_list[0] if region_list is not None and len(region_list) > 0 else '')
+
+        postal_list = list(json_tree.execute('$..postalCode'))
+        postalCode_list.append(postal_list[0] if postal_list is not None and len(postal_list) > 0 else '')
+
+        country_list = list(json_tree.execute('$..addressCountry'))
+        addressCountry_list.append(country_list[0] if country_list is not None and len(country_list) > 0 else '')
+
+        full_add_list = page_html.findAll('div', {
+            'class': "institution-info__contact-detail institution-info__contact-detail--address"})
+
+        ff = full_add_list[0].text.strip() if full_add_list is not None and len(full_add_list) > 0 else ''
+        full_add_list.append(ff)
+
+        print(f'{len(full_address_list)} out of {len(web_address)}: {ff}')
+
     except Exception as e:
+        streetAddress_list.append('')
+        addressLocality_list.append('')
+        addressRegion_list.append('')
+        postalCode_list.append('')
+        addressCountry_list.append('')
+        full_address_list.append('')
         print(f'Error fetching address for {web}: {e}')
         
     
