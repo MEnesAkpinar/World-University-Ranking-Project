@@ -115,7 +115,7 @@ for web in web_address:
             'class': "institution-info__contact-detail institution-info__contact-detail--address"})
 
         ff = full_add_list[0].text.strip() if full_add_list is not None and len(full_add_list) > 0 else ''
-        full_add_list.append(ff)
+        full_address_list.append(ff)
 
         print(f'{len(full_address_list)} out of {len(web_address)}: {ff}')
 
