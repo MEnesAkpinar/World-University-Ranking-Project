@@ -13,23 +13,18 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-driver_service_stats = Service(ChromeDriverManager().install())
-driver_service_scores = Service(ChromeDriverManager().install())
-stats_browser = webdriver.Chrome(service=driver_service_stats)
-scores_browser = webdriver.Chrome(service=driver_service_scores)
+driver_service = Service(ChromeDriverManager().install())
+browser = webdriver.Chrome(service=driver_service)
+
 
 url_stats = "https://www.timeshighereducation.com/world-university-rankings/2024/world-ranking#!/length/-1/sort_by/rank/sort_order/asc/cols/stats"
 url_scores = "https://www.timeshighereducation.com/world-university-rankings/2024/world-ranking#!/length/-1/sort_by/rank/sort_order/asc/cols/scores"
 
 
 # use the webdriver to request the ranking webpage
-stats_browser.get(url_stats)
+browser.get(url_stats)
 time.sleep(5)
-
-# collect the webpage HTML after its loading
-stats_page_html = stats_browser.page_source
-
-# parse the HTML using BeautifulSoup
+stats_page_html = browser.page_source
 stats_page_soup = soup(stats_page_html, 'html.parser')
 
 # collect HTML objects 
@@ -40,16 +35,10 @@ stats_student_staff_ratio_obj = stats_page_soup.findAll("td", {"class":"stats st
 stats_pc_intl_students_obj = stats_page_soup.findAll("td", {"class":"stats stats_pc_intl_students"})
 stats_female_male_ratio_obj = stats_page_soup.findAll("td", {"class":"stats stats_female_male_ratio"})
 
-# close the browser
-stats_browser.quit() 
 
-
-# use the webdriver to request the scores webpage
-scores_browser.get(url_scores)
+browser.get(url_scores)
 time.sleep(5)
-
-# collect the webpage HTML after its loading
-scores_page_html = scores_browser.page_source
+scores_page_html = browser.page_source
 scores_page_soup = soup(scores_page_html, 'html.parser')
 
 # parse the HTML using BeautifulSoup
@@ -61,7 +50,7 @@ industry_income_score_obj = scores_page_soup.findAll("td", {"class":"scores indu
 international_outlook_score_obj = scores_page_soup.findAll("td", {"class":"scores international_outlook-score"})
 
 # close the browser
-scores_browser.quit() 
+browser.quit() 
 
 rank, names, number_students, student_staff_ratio, intl_students, female_male_ratio, web_address =  [], [], [], [], [], [], []
 overall_score, teaching_score, research_score, citations_score, industry_income_score, international_outlook_score = [], [], [], [], [], []
